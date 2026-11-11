@@ -58,12 +58,16 @@ def save_pair_selection():
 
 
 def save_hardware():
+    import torch
+    gpu = torch.cuda.get_device_name(0) if torch.cuda.is_available() else "none"
     lines = [
         "platform: %s" % platform.platform(),
         "processor: %s" % platform.processor(),
         "cpu count: %s" % os.cpu_count(),
         "python: %s" % platform.python_version(),
         "opencv: %s" % cv2.__version__,
+        "torch: %s" % torch.__version__,
+        "gpu: %s" % gpu,
         "superpoint device: %s" % superpoint_device_name(),
         "timing: %d warm-up run(s), median of %d runs" % (TIMING_WARMUP, TIMING_RUNS),
     ]
