@@ -15,4 +15,10 @@ N_IMAGES = 11
 TIMING_WARMUP = 1         # runs that are not counted
 TIMING_RUNS = 5           # timed runs, the median is reported
 
+# OpenCV's RANSAC uses a fixed seed and picks samples by their position in
+# the list, so the result depends on the order of the matches. I run it on
+# RANSAC_REPEATS shuffled orders and report the median.
+RANSAC_REPEATS = 30
+RANSAC_SEED = 0           # seed of my shuffles, same on every computer
+
 METHODS = ("sift", "orb", "superpoint")

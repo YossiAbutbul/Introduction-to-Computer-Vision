@@ -10,7 +10,7 @@ from dataclasses import dataclass
 import cv2
 import numpy as np
 
-from .config import TAU, RANSAC_PROB, RANSAC_THRESH
+from .config import TAU, RANSAC_PROB, RANSAC_REPEATS, RANSAC_SEED, RANSAC_THRESH
 from .dataset import load_camera
 
 
@@ -174,6 +174,27 @@ def estimate_relative_pose(pts1, pts2, K1, K2=None,
     t = t.ravel() / np.linalg.norm(t)
     return PoseEstimate(R=R, t=t, E=E, mask=mask,
                         n_inliers=int(mask.sum()), n_inliers_pose=int(n_pose))
+
+
+def estimate_pose_repeated(pts1, pts2, K1, K2=None, repeats=RANSAC_REPEATS, seed=RANSAC_SEED):
+    """
+    Run estimate_relative_pose on `repeats` random orders of the same matches.
+    Only the order changes, the matches and the RANSAC parameters stay the same.
+    Returns a list of PoseEstimate. The mask of each one is given back in the
+    ORIGINAL order of the matches.
+    """
+    pts1 = np.asarray(pts1, dtype=np.float64).reshape(-1, 2)
+    pts2 = np.asarray(pts2, dtype=np.float64).reshape(-1, 2)
+    rng = np.random.default_rng(seed)
+    poses = []
+    for _ in range(repeats):
+        perm = rng.permutation(len(pts1))
+        pose = estimate_relative_pose(pts1[perm], pts2[perm], K1, K2)
+        mask = np.zeros(len(pts1), dtype=bool)
+        mask[perm] = pose.mask            # undo the shuffle
+        pose.mask = mask
+        poses.append(pose)
+    return poses
 
 
 def pose_errors(R_hat, t_hat, R_gt, t_gt):
