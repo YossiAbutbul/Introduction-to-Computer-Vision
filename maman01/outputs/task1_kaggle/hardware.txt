@@ -1,0 +1,9 @@
+platform: Linux-6.18.55+-x86_64-with-glibc2.39
+processor: x86_64
+cpu count: 4
+python: 3.13.16
+opencv: 5.0.0
+torch: 2.11.0+cu130
+gpu: Tesla T4
+superpoint device: cuda
+timing: 1 warm-up run(s), median of 5 runs
