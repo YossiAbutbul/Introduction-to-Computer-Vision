@@ -1,0 +1,4 @@
+pair,baseline,rot_angle_deg,n_matches,n_consistent,n_points_kept,removed_non_finite,removed_w,removed_neg_depth,removed_small_angle,pose_ransac_inliers,e_R_deg,e_t_deg,scale_s,e3d_mean,e3d_median,e3d_max,depth_median,e3d_rel_median_pct,e3d_along_ray_median,e3d_systematic,depth_ratio_est_gt_median,tri_angle_median_deg,reproj_gt_mean_px,reproj_gt_median_px,reproj_est_mean_px,reproj_est_median_px
+0005-0006,1.73,9.93,2100,2042,2042,0,0,0,0,2015,0.0669,0.1946,1.73,0.04127,0.0434,0.31555,8.483,0.504,1.0,0.943,0.9952,10.5,0.1474,0.1133,0.153,0.1002
+0004-0007,5.246,32.48,782,702,702,0,0,0,0,680,0.0394,0.0541,5.2462,0.00557,0.00535,0.01456,8.427,0.06,0.993,0.944,1.0006,31.9,0.2203,0.1596,0.2169,0.1582
+0003-0008,8.847,59.15,153,106,106,0,0,0,0,103,0.2277,0.2223,8.8468,0.02936,0.02744,0.05013,9.872,0.278,1.0,0.962,0.9973,56.0,0.2914,0.2524,0.2646,0.226

@@ -22,3 +22,7 @@ RANSAC_REPEATS = 30
 RANSAC_SEED = 0           # seed of my shuffles, same on every computer
 
 METHODS = ("sift", "orb", "superpoint")
+
+# task 3: a 3D point is dropped if the angle between its two viewing rays is
+# smaller than this (almost parallel rays = unreliable depth)
+MIN_TRI_ANGLE_DEG = 2.0
