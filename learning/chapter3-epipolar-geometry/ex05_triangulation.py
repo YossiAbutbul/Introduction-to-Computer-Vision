@@ -104,3 +104,49 @@ err = np.sqrt((np.sum((x1_orig - x1_proj) ** 2, axis=1) +
 print("reprojection error mean (px):", round(err.mean(), 3))
 print("reprojection error median (px):", round(np.median(err), 3))
 print("max reprojection error (px):", round(err.max(), 3))
+
+
+# ---------------------------------------------------------------------------
+# 8. Visualize the 3D point cloud and the two camera centers
+# ---------------------------------------------------------------------------
+import matplotlib.pyplot as plt
+
+# Camera centers in camera-1 coordinates: C1 = origin, C2 = -R^T (s t)
+cam1 = np.zeros(3)
+cam2 = -R_hat.T @ (s * t_hat)
+
+fig = plt.figure(figsize=(9, 7))
+ax = fig.add_subplot(projection="3d")
+
+# Plot X (right), Z (depth), -Y (up), so the scene is not upside down
+ax.scatter(X_valid[:, 0], X_valid[:, 2], -X_valid[:, 1], s=1, c="steelblue")
+ax.scatter([cam1[0], cam2[0]], [cam1[2], cam2[2]], [-cam1[1], -cam2[1]],
+           s=60, c="red", marker="^", label="cameras")
+
+ax.set_xlabel("X (right)")
+ax.set_ylabel("Z (depth)")
+ax.set_zlabel("-Y (up)")
+ax.set_title("Triangulated point cloud (0005-0006, SIFT)")
+ax.legend()
+
+plt.savefig(os.path.join(script_dir, "point_cloud_sift.png"), dpi=150)
+plt.show()
+
+
+# ---------------------------------------------------------------------------
+# 9. Top-down view (X vs Z): the wall should appear as a line
+# ---------------------------------------------------------------------------
+plt.figure(figsize=(7, 7))
+plt.scatter(X_valid[:, 0], X_valid[:, 2], s=1, c="steelblue")
+plt.scatter([cam1[0], cam2[0]], [cam1[2], cam2[2]],
+            s=60, c="red", marker="^", label="cameras")
+
+plt.axis("equal")          # same scale on both axes, so shapes are not distorted
+plt.xlabel("X (right)")
+plt.ylabel("Z (depth)")
+plt.title("Top-down view of the point cloud")
+plt.legend()
+plt.grid(True)
+
+plt.savefig(os.path.join(script_dir, "point_cloud_top_view.png"), dpi=150)
+plt.show()
