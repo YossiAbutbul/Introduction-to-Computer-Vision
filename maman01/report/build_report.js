@@ -33,6 +33,7 @@ const ratio = readCsv(path.join(OUT, "task1", "results_ratio.csv"));
 const mnn = readCsv(path.join(OUT, "task1", "results_mnn.csv"));
 const pairSel = readCsv(path.join(OUT, "task1", "pair_selection.csv"));
 const ratioKaggle = readCsv(path.join(OUT, "task1_kaggle", "results_ratio.csv"));   // timing only
+const t2 = readCsv(path.join(OUT, "task2", "results.csv"));
 
 const NAME = { sift: "SIFT", orb: "ORB", superpoint: "SuperPoint" };
 const f = (x, d) => Number(x).toFixed(d);
@@ -158,7 +159,7 @@ function image(file, widthPx, heightPx) {
     alignment: AlignmentType.CENTER,
     spacing: { before: 120 },
     keepNext: true,
-    children: [new ImageRun({ type: "jpg", data: fs.readFileSync(file),
+    children: [new ImageRun({ type: file.endsWith(".png") ? "png" : "jpg", data: fs.readFileSync(file),
       transformation: { width: widthPx, height: heightPx } })],
   });
 }
@@ -311,9 +312,61 @@ add(
   pageBreak(),
 );
 
+// ---------------------------------------------------------------- task 2
+
+const im = (k) => t2.find((x) => Number(x.image) === k);     // row of image k
+const T2 = path.join(OUT, "task2");
+
+add(
+  heading("2. משימה 2", HeadingLevel.HEADING_1),
+  para("השתמשתי ב-SIFT, שיצא הכי טוב במשימה 1. תמונה 0000 היא תמונת הייחוס, והתאמתי אותה לכל אחת מהתמונות 0001 עד 0010 לפי הסדר, " +
+    "עם אותם פרמטרים כמו במשימה 1 (כולל 30 הרצות של RANSAC)."),
+  table(
+    ["תמונה", "baseline", "זווית [°]", "התאמות", Nin(), rin(), "RANSAC inliers", [eR(), " [°]"], [et(), " [°]"]],
+    t2.map((x) => [x.image, f(x.baseline, 2), f(x.rot_angle_deg, 1), x.n_matches, x.n_inliers_FGT,
+      f(x.r_inliers_FGT, 3), x.n_inliers_ransac, f(x.e_R_deg, 3), f(x.e_t_deg, 3)]),
+    [0.8, 1, 1, 0.9, 0.9, 0.9, 1.1, 1, 1],
+  ),
+  caption(["טבלה 5: תמונה 0000 מול כל אחת מהתמונות (RANSAC inliers, ", eR(), " ו-", et(), " הם חציון של 30 הרצות)"]),
+  image(path.join(T2, "plot_inliers.png"), 600, 208),
+  caption("איור 3: מספר ההתאמות העקביות ושיעורן"),
+  image(path.join(T2, "plot_errors.png"), 400, 277),
+  caption("איור 4: שגיאות התנוחה בסקאלה לוגריתמית. הפס הבהיר הוא הטווח של 30 ההרצות"),
+  image(path.join(T2, "plot_geometry.png"), 600, 208),
+  caption("איור 5: ה-baseline וזווית הסיבוב האמיתיים"),
+  image(path.join(T2, "matches_0000-0010.jpg"), 600, 200),
+  caption("איור 6: SIFT על 0000-0010. ירוק: עקבית, אדום: לא עקבית"),
+
+  heading("ניתוח", HeadingLevel.HEADING_2),
+  para(["1. מספר ההתאמות העקביות יורד מהר כבר מההתחלה, מ-" + im(1).n_inliers_FGT + " בתמונה 1 ל-" + im(2).n_inliers_FGT +
+    " בתמונה 2 ובסוף ל-" + im(10).n_inliers_FGT + " בתמונה 10. השיעור שלהן יורד הרבה יותר לאט: עד תמונה 6 (זווית של " +
+    f(im(6).rot_angle_deg, 1) + "°) הוא עדיין " + f(im(6).r_inliers_FGT, 3) + ", ורק אחרי זה הוא נופל ל-" +
+    f(im(7).r_inliers_FGT, 3) + ", " + f(im(8).r_inliers_FGT, 3) + " ובסוף " + f(im(10).r_inliers_FGT, 3) + ". " +
+    "בהתחלה פשוט מוצאים פחות התאמות אבל רובן עדיין נכונות, ומשם גם החלק השגוי מתחיל לגדול."]),
+  para(["2. עד תמונה 7 התנוחה מדויקת מאוד: ", eR(), " עולה לאט מ-" + f(im(1).e_R_deg, 3) + "° ל-" + f(im(7).e_R_deg, 3) +
+    "°, ו-", et(), " לא עובר את 0.2°. בתמונה 8 זה עדיין עובד (", eR(), "=" + f(im(8).e_R_deg, 2) + "°) עם " +
+    im(8).n_inliers_ransac + " inliers בלבד. בתמונות 9 ו-10 השיערוך נכשל לגמרי, ", eR(), " מעל 100°. " +
+    "אין כאן ירידה הדרגתית בדיוק. זה עובד, ואז פתאום לא."]),
+  para(["3. הקשר לא לינארי. הירידה מ-" + im(1).n_inliers_FGT + " ל-" + im(7).n_inliers_FGT +
+    " התאמות עקביות כמעט לא שינתה את השגיאה. מה שקובע זה אם נשארו מספיק התאמות נכונות ביחס לשגויות. " +
+    "בתמונה 9 RANSAC מצא " + im(9).n_inliers_ransac + " inliers, יותר מ-" + im(9).n_inliers_FGT +
+    " ההתאמות שבאמת עקביות עם ", FGT(), ". כלומר הוא מצא מודל שגוי שקבוצה של התאמות שגויות מסכימה איתו, " +
+    "והקבוצה הזאת גדולה יותר מהקבוצה הנכונה."]),
+  para(["4. לא. הזווית פוגעת בהתאמה, כי מזווית אחרת כל נקודה נראית אחרת, ולכן יש פחות התאמות ויותר מהן שגויות. " +
+    "ה-baseline דווקא עוזר לכיוון ההזזה: ", et(), " יורד מ-" + f(im(1).e_t_deg, 3) + "° בתמונה 1 ל-" + f(im(7).e_t_deg, 3) +
+    "° בתמונה 7, למרות שמספר ההתאמות ירד פי " + f(im(1).n_matches / im(7).n_matches, 0) + ". " +
+    "עם baseline גדול הנקודות זזות יותר בין התמונות, וקל יותר לקבוע מאיפה לאיפה המצלמה זזה. ", eR(),
+    " לעומת זאת עולה לאט. צריך לזכור שבמאגר הזה ה-baseline והזווית גדלים ביחד, אז אי אפשר להפריד ביניהם לגמרי."]),
+  para("5. השגיאות הגדולות הן בתמונות 9 ו-10 (" + f(im(9).rot_angle_deg, 1) + "° ו-" + f(im(10).rot_angle_deg, 1) + "°). " +
+    "באיור 6 רואים שבתמונה 0000 המזרקה מצולמת מצד אחד יחד עם הקיר והבניין הלבן, ובתמונה 0010 מהצד השני עם הארמון ברקע. " +
+    "החלק המשותף הוא בעיקר המזרקה, והיא נראית בזווית מאוד חדה. הרבה מההתאמות השגויות הולכות לחלונות של הארמון, " +
+    "שבכלל לא מופיע בתמונה 0000. בנוסף המרקם חוזר על עצמו (אבני הקיר והחלונות), ואני חושב שזה מה שמאפשר להתאמות שגויות " +
+    "לעבור את ה-ratio test, אבל את זה לא בדקתי."),
+  pageBreak(),
+);
+
 // remaining tasks
 add(
-  heading("2. משימה 2", HeadingLevel.HEADING_1), para(todo("[טרם נכתב]")),
   heading("3. משימה 3", HeadingLevel.HEADING_1), para(todo("[טרם נכתב]")),
   heading("4. משימה 4", HeadingLevel.HEADING_1), para(todo("[טרם נכתב]")),
 );
