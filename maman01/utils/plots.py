@@ -12,12 +12,14 @@ import numpy as np
 from .dataset import ensure_dir, load_image
 
 
-def draw_matches(idx1, idx2, pts1, pts2, out_path, mask=None, max_draw=150, seed=0):
+def draw_matches(idx1, idx2, pts1, pts2, out_path, mask=None, max_draw=150, seed=0,
+                 scale=1.0):
     """
     Two images side by side with lines between matched points.
     With a mask: green = consistent, red = not consistent.
     Only `max_draw` random matches are drawn (fixed seed), otherwise the
     image is too crowded.
+    scale < 1 makes the saved image smaller (the full size is 6144x2048).
     """
     img1 = load_image(idx1, color=True)
     img2 = load_image(idx2, color=True)
@@ -41,6 +43,8 @@ def draw_matches(idx1, idx2, pts1, pts2, out_path, mask=None, max_draw=150, seed
         cv2.circle(canvas, p, 5, color, -1, cv2.LINE_AA)
         cv2.circle(canvas, q, 5, color, -1, cv2.LINE_AA)
 
+    if scale != 1.0:
+        canvas = cv2.resize(canvas, None, fx=scale, fy=scale, interpolation=cv2.INTER_AREA)
     ensure_dir(os.path.dirname(os.path.abspath(out_path)))
     cv2.imwrite(out_path, canvas)
     return out_path
