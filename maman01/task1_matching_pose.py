@@ -6,7 +6,8 @@ change. For every pair and method:
   - match image (green = consistent with F_GT, red = not)
   - number of matches, N_inliers and r_inliers w.r.t. F_GT
   - time of detection + description + matching
-  - RANSAC inliers, e_R, e_t
+  - RANSAC inliers, e_R, e_t: median (and min / max) over RANSAC_REPEATS
+    runs on shuffled orders of the same matches
 
 Outputs (in outputs/task1/):
   pair_selection.csv   GT baseline and rotation angle of all 55 pairs
@@ -24,11 +25,11 @@ import platform
 import cv2
 import numpy as np
 
-from utils.config import (METHODS, N_IMAGES, RANSAC_PROB, RANSAC_THRESH, RATIO_TEST, TAU,
-                          TIMING_RUNS, TIMING_WARMUP)
+from utils.config import (METHODS, N_IMAGES, RANSAC_PROB, RANSAC_REPEATS, RANSAC_THRESH,
+                          RATIO_TEST, TAU, TIMING_RUNS, TIMING_WARMUP)
 from utils.dataset import ensure_dir, get_paths, load_all_cameras
 from utils.features import superpoint_device_name, time_match_pair
-from utils.geometry import (estimate_relative_pose, geometric_consistency, gt_pair_geometry,
+from utils.geometry import (estimate_pose_repeated, geometric_consistency, gt_pair_geometry,
                             pose_errors, relative_pose, rotation_angle_deg)
 from utils.plots import draw_matches, save_table
 
@@ -70,6 +71,7 @@ def save_hardware():
         "gpu: %s" % gpu,
         "superpoint device: %s" % superpoint_device_name(),
         "timing: %d warm-up run(s), median of %d runs" % (TIMING_WARMUP, TIMING_RUNS),
+        "pose: median over %d RANSAC runs on shuffled matches" % RANSAC_REPEATS,
     ]
     with open(os.path.join(OUT, "hardware.txt"), "w") as f:
         f.write("\n".join(lines) + "\n")
@@ -83,9 +85,11 @@ def run_one(i, j, method, strategy, gt):
     # (b) quality of the matches w.r.t. F_GT
     mask_gt, n_gt, r_gt, d = geometric_consistency(res.pts1, res.pts2, gt["F_gt"])
 
-    # (c) relative pose from the matches
-    pose = estimate_relative_pose(res.pts1, res.pts2, gt["cam1"].K, gt["cam2"].K)
-    e_R, e_t = pose_errors(pose.R, pose.t, gt["R_gt"], gt["t_gt"])
+    # (c) relative pose from the matches, RANSAC on RANSAC_REPEATS shuffled orders
+    poses = estimate_pose_repeated(res.pts1, res.pts2, gt["cam1"].K, gt["cam2"].K)
+    errs = np.array([pose_errors(p.R, p.t, gt["R_gt"], gt["t_gt"]) for p in poses])
+    e_R, e_t = errs[:, 0], errs[:, 1]
+    n_ransac = np.array([p.n_inliers for p in poses])
 
     row = {
         "pair": pair_name(i, j),
@@ -102,9 +106,14 @@ def run_one(i, j, method, strategy, gt):
         "time_median_s": round(float(np.median(times)), 3),
         "time_min_s": round(float(times.min()), 3),
         "time_max_s": round(float(times.max()), 3),
-        "n_inliers_ransac": pose.n_inliers,
-        "e_R_deg": round(e_R, 4),
-        "e_t_deg": round(e_t, 4),
+        # medians over the RANSAC repeats (each median on its own)
+        "n_inliers_ransac": int(np.median(n_ransac)),
+        "e_R_deg": round(float(np.median(e_R)), 4),
+        "e_t_deg": round(float(np.median(e_t)), 4),
+        "e_R_min": round(float(e_R.min()), 4),
+        "e_R_max": round(float(e_R.max()), 4),
+        "e_t_min": round(float(e_t.min()), 4),
+        "e_t_max": round(float(e_t.max()), 4),
     }
     return row, res, mask_gt
 
@@ -123,8 +132,8 @@ def main():
     save_pair_selection()
     for line in save_hardware():
         print(line)
-    print("params: ratio=%.2f  tau=%.1f px  RANSAC prob=%.3f thresh=%.1f px\n"
-          % (RATIO_TEST, TAU, RANSAC_PROB, RANSAC_THRESH))
+    print("params: ratio=%.2f  tau=%.1f px  RANSAC prob=%.3f thresh=%.1f px  repeats=%d\n"
+          % (RATIO_TEST, TAU, RANSAC_PROB, RANSAC_THRESH, RANSAC_REPEATS))
 
     for strategy in ("ratio", "mnn"):
         rows = []

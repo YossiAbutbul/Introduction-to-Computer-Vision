@@ -7,3 +7,4 @@ torch: 2.15.0+cpu
 gpu: none
 superpoint device: cpu
 timing: 1 warm-up run(s), median of 5 runs
+pose: median over 30 RANSAC runs on shuffled matches
