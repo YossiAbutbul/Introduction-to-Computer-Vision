@@ -69,6 +69,11 @@ def load_image(idx, color=False):
 # and t = -R C.
 # I checked this on pair 0005-0006: with the transpose the median Sampson
 # distance of the SIFT matches w.r.t. F_GT is 0.027 px^2, without it ~6810.
+#
+# R in the files has only 6 digits, so R R^T differs from I by ~1e-6.
+# That is enough to break e_R for small angles (trace(R) ~ 3 - theta^2, and
+# for theta = 0.1 deg theta^2 is ~3e-6). So R is replaced by the closest
+# rotation matrix (SVD: R = U V^T) right after reading it.
 # ----------------------------------------------------------------------------
 
 @dataclass
@@ -87,6 +92,16 @@ class Camera:
         return self.K @ np.hstack([self.R, self.t.reshape(3, 1)])
 
 
+def closest_rotation(R):
+    """Closest rotation matrix to R (in Frobenius norm): U V^T from the SVD."""
+    U, _, Vt = np.linalg.svd(R)
+    R_rot = U @ Vt
+    if np.linalg.det(R_rot) < 0:        # avoid a reflection
+        U[:, -1] *= -1
+        R_rot = U @ Vt
+    return R_rot
+
+
 def load_camera(idx):
     with open(camera_path(idx), "r") as f:
         rows = [line.split() for line in f if line.strip()]
@@ -100,7 +115,7 @@ def load_camera(idx):
     C = np.array([float(v) for v in rows[7]], dtype=np.float64)
     width, height = (int(v) for v in rows[8])
 
-    R = R_stored.T          # camera->world  ->  world->camera
+    R = closest_rotation(R_stored.T)    # camera->world  ->  world->camera
     t = -R @ C
     return Camera(idx=idx, K=K, R=R, C=C, t=t, width=width, height=height)
 

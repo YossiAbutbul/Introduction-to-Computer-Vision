@@ -39,13 +39,12 @@ def relative_pose(cam1, cam2):
         t = t2 - R t1 = R2 (C1 - C2)
     Returns R_gt, t_gt, baseline = |C2 - C1|.
 
-    The assert compares the two forms of t. The tolerance is 1e-3 and not
-    smaller because R in the files has only 6 digits (R R^T differs from I by
-    ~1e-6), so the two forms differ by ~4e-6.
+    The assert compares the two forms of t. They are equal only if R1 is a
+    real rotation (R1^T R1 = I), which load_camera makes sure of.
     """
     R_gt = cam2.R @ cam1.R.T
     t_gt = cam2.R @ (cam1.C - cam2.C)
-    assert np.allclose(t_gt, cam2.t - R_gt @ cam1.t, atol=1e-3), \
+    assert np.allclose(t_gt, cam2.t - R_gt @ cam1.t, atol=1e-9), \
         "the two forms of t_gt do not agree"
     baseline = float(np.linalg.norm(cam2.C - cam1.C))
     return R_gt, t_gt, baseline
