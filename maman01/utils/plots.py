@@ -64,6 +64,54 @@ def save_table(rows, out_path, fieldnames=None):
     return out_path
 
 
+# colors for line plots (blue, orange) and chart ink
+SERIES_COLORS = ("#2a78d6", "#eb6834")
+INK, MUTED, GRID = "#0b0b0b", "#52514e", "#e1e0d9"
+
+
+def plot_vs_index(x, panels, out_path, xlabel="image index"):
+    """
+    One row of subplots that share the x axis (the image index).
+    panels: list of dicts
+        {"ylabel": str, "log": bool, "ylim": (lo, hi) or None,
+         "series": [{"y": [...], "label": str, "lo": [...], "hi": [...]}, ...]}
+    lo / hi are optional and drawn as a light band (e.g. min / max over the
+    RANSAC repeats). Each panel holds quantities with the same unit.
+    """
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
+    fig, axes = plt.subplots(1, len(panels), figsize=(5.2 * len(panels), 3.6), squeeze=False)
+    for ax, panel in zip(axes[0], panels):
+        for k, s in enumerate(panel["series"]):
+            color = SERIES_COLORS[k]
+            if s.get("lo") is not None:
+                ax.fill_between(x, s["lo"], s["hi"], color=color, alpha=0.15, linewidth=0)
+            ax.plot(x, s["y"], marker="o", markersize=6, linewidth=1.5, color=color, label=s["label"])
+        if panel.get("log"):
+            ax.set_yscale("log")
+        if panel.get("ylim"):
+            ax.set_ylim(*panel["ylim"])
+        ax.set_xticks(list(x))
+        ax.set_xlabel(xlabel, color=INK)
+        ax.set_ylabel(panel["ylabel"], color=INK)
+        ax.grid(True, color=GRID, linewidth=0.6)
+        ax.set_axisbelow(True)
+        for side in ("top", "right"):
+            ax.spines[side].set_visible(False)
+        for side in ("left", "bottom"):
+            ax.spines[side].set_color("#c3c2b7")
+        ax.tick_params(colors=MUTED)
+        if len(panel["series"]) > 1:
+            ax.legend(frameon=False)
+    fig.tight_layout()
+    ensure_dir(os.path.dirname(os.path.abspath(out_path)))
+    fig.savefig(out_path, dpi=150, facecolor="white")
+    plt.close(fig)
+    return out_path
+
+
 def plot_point_clouds(X_gt, X_est, out_path, labels=("ground truth", "estimated"),
                       title=None, point_size=2):
     """
