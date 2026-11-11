@@ -11,7 +11,7 @@ import cv2
 import numpy as np
 
 from .config import (METHODS, ORB_N_FEATURES, RATIO_TEST, SIFT_N_FEATURES,
-                    SP_MAX_KEYPOINTS)
+                     SP_MAX_KEYPOINTS, TIMING_RUNS, TIMING_WARMUP)
 from .dataset import image_path, load_image
 
 
@@ -154,11 +154,13 @@ def match_pair(idx1, idx2, method, strategy="ratio", ratio=RATIO_TEST, inputs=No
 
 
 def time_match_pair(idx1, idx2, method, strategy="ratio", ratio=RATIO_TEST,
-                    runs=3, warmup=1):
+                    runs=TIMING_RUNS, warmup=TIMING_WARMUP):
     """
     Run `warmup` runs that are not counted (the first run is usually slower),
     then `runs` timed runs.
-    Returns (result of last run, mean time, std time).
+    Returns (result of last run, array of the timed runs in seconds).
+    I report the median: one slow run (e.g. something else running on the
+    computer) changes the mean a lot but the median almost not at all.
     """
     inputs = (load_detector_input(idx1, method), load_detector_input(idx2, method))
     for _ in range(warmup):
@@ -168,4 +170,4 @@ def time_match_pair(idx1, idx2, method, strategy="ratio", ratio=RATIO_TEST,
     for _ in range(runs):
         result = match_pair(idx1, idx2, method, strategy, ratio, inputs=inputs)
         times.append(result.elapsed)
-    return result, float(np.mean(times)), float(np.std(times))
+    return result, np.array(times)

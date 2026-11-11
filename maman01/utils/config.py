@@ -12,4 +12,7 @@ ORB_N_FEATURES = 5000     # default is 500, too few compared to SIFT
 SP_MAX_KEYPOINTS = 4096   # SuperPoint keypoint limit
 N_IMAGES = 11
 
+TIMING_WARMUP = 1         # runs that are not counted
+TIMING_RUNS = 5           # timed runs, the median is reported
+
 METHODS = ("sift", "orb", "superpoint")
