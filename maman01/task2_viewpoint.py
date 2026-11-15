@@ -74,8 +74,8 @@ def make_plots(rows):
     col = lambda k: [r[k] for r in rows]
 
     plot_vs_index(x, [
-        {"ylabel": r"$N_{inliers}$ (consistent with $F_{GT}$)", "series": [{"y": col("n_inliers_FGT"), "label": "N_inliers"}]},
-        {"ylabel": r"$r_{inliers} = N_{inliers} / N$", "ylim": (0, 1.02), "series": [{"y": col("r_inliers_FGT"), "label": "r_inliers"}]},
+        {"title": "Number of consistent matches", "ylabel": r"$N_{inliers}$ (consistent with $F_{GT}$)", "series": [{"y": col("n_inliers_FGT"), "label": "N_inliers"}]},
+        {"title": "Share of consistent matches", "ylabel": r"$r_{inliers} = N_{inliers} / N$", "ylim": (0, 1.02), "series": [{"y": col("r_inliers_FGT"), "label": "r_inliers"}]},
     ], os.path.join(OUT, "plot_inliers.png"))
 
     # log scale: the errors go from ~0.1 deg to tens of degrees
@@ -84,11 +84,11 @@ def make_plots(rows):
             {"y": col("e_R_deg"), "lo": col("e_R_min"), "hi": col("e_R_max"), "label": r"$e_R$ (rotation)"},
             {"y": col("e_t_deg"), "lo": col("e_t_min"), "hi": col("e_t_max"), "label": r"$e_t$ (translation direction)"},
         ]},
-    ], os.path.join(OUT, "plot_errors.png"))
+    ], os.path.join(OUT, "plot_errors.png"), band_label="range over the 30 RANSAC runs (min-max)")
 
     plot_vs_index(x, [
-        {"ylabel": "baseline [dataset units]", "series": [{"y": col("baseline"), "label": "baseline"}]},
-        {"ylabel": "relative rotation angle [deg]", "series": [{"y": col("rot_angle_deg"), "label": "rotation"}]},
+        {"title": "Baseline", "ylabel": "baseline [dataset units]", "series": [{"y": col("baseline"), "label": "baseline"}]},
+        {"title": "Relative rotation angle", "ylabel": "relative rotation angle [deg]", "series": [{"y": col("rot_angle_deg"), "label": "rotation"}]},
     ], os.path.join(OUT, "plot_geometry.png"))
 
 

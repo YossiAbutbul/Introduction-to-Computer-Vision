@@ -66,23 +66,30 @@ def save_table(rows, out_path, fieldnames=None):
 
 # colors for line plots (blue, orange) and chart ink
 SERIES_COLORS = ("#2a78d6", "#eb6834")
+REPORT_WIDTH_IN = 6.3          # text width of the report page (16 cm)
 INK, MUTED, GRID = "#0b0b0b", "#52514e", "#e1e0d9"
 
 
-def plot_vs_index(x, panels, out_path, xlabel="image index"):
+def plot_vs_index(x, panels, out_path, xlabel="image index", height=None, band_label=None):
     """
     One row of subplots that share the x axis (the image index).
     panels: list of dicts
-        {"ylabel": str, "log": bool, "ylim": (lo, hi) or None,
+        {"title": str (optional), "ylabel": str, "log": bool, "ylim": (lo, hi) or None,
          "series": [{"y": [...], "label": str, "lo": [...], "hi": [...]}, ...]}
     lo / hi are optional and drawn as a light band (e.g. min / max over the
-    RANSAC repeats). Each panel holds quantities with the same unit.
+    RANSAC repeats), described in the legend by band_label. Each panel holds
+    quantities with the same unit.
+    The figure is drawn at the width it has in the report (16 cm), so the
+    text keeps its real size.
     """
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
 
-    fig, axes = plt.subplots(1, len(panels), figsize=(5.2 * len(panels), 3.6), squeeze=False)
+    from matplotlib.patches import Patch
+    plt.rcParams.update({"font.size": 9})
+    h = height or (3.0 if len(panels) > 1 else 3.8)
+    fig, axes = plt.subplots(1, len(panels), figsize=(REPORT_WIDTH_IN, h), squeeze=False)
     for ax, panel in zip(axes[0], panels):
         for k, s in enumerate(panel["series"]):
             color = SERIES_COLORS[k]
@@ -96,6 +103,8 @@ def plot_vs_index(x, panels, out_path, xlabel="image index"):
         ax.set_xticks(list(x))
         ax.set_xlabel(xlabel, color=INK)
         ax.set_ylabel(panel["ylabel"], color=INK)
+        if panel.get("title"):
+            ax.set_title(panel["title"], color=INK, fontsize=10)
         ax.grid(True, color=GRID, linewidth=0.6)
         ax.set_axisbelow(True)
         for side in ("top", "right"):
@@ -103,8 +112,13 @@ def plot_vs_index(x, panels, out_path, xlabel="image index"):
         for side in ("left", "bottom"):
             ax.spines[side].set_color("#c3c2b7")
         ax.tick_params(colors=MUTED)
-        if len(panel["series"]) > 1:
-            ax.legend(frameon=False)
+        has_band = any(s.get("lo") is not None for s in panel["series"])
+        if len(panel["series"]) > 1 or has_band:
+            handles, labels = ax.get_legend_handles_labels()
+            if has_band and band_label:
+                handles.append(Patch(facecolor="#9a9a9a", alpha=0.35, linewidth=0))
+                labels.append(band_label)
+            ax.legend(handles, labels, frameon=False, loc="upper left")
     fig.tight_layout()
     ensure_dir(os.path.dirname(os.path.abspath(out_path)))
     fig.savefig(out_path, dpi=150, facecolor="white")
@@ -140,9 +154,11 @@ def plot_point_clouds(X_gt, X_est, out_path, labels=("ground truth", "estimated"
                                   label="camera 1"))
         return handles
 
-    fig = plt.figure(figsize=(16, 5.5))
+    plt.rcParams.update({"font.size": 9})
+    fig = plt.figure(figsize=(REPORT_WIDTH_IN, 7.2))
+    grid = fig.add_gridspec(2, 2, height_ratios=[1.1, 1])
 
-    ax = fig.add_subplot(1, 3, 1, projection="3d")
+    ax = fig.add_subplot(grid[0, :], projection="3d")
     ax.scatter(X_est[:, 0], X_est[:, 1], X_est[:, 2], c="tab:red", **kw)
     ax.scatter(X_gt[:, 0], X_gt[:, 1], X_gt[:, 2], c="tab:blue", **kw)
     ax.set_xlabel("X [dataset units]")
@@ -151,7 +167,7 @@ def plot_point_clouds(X_gt, X_est, out_path, labels=("ground truth", "estimated"
     ax.set_title("3D view (camera 1 frame)")
     ax.legend(handles=legend_handles(False), loc="upper right")
 
-    ax = fig.add_subplot(1, 3, 2)
+    ax = fig.add_subplot(grid[1, 0])
     ax.scatter(X_est[:, 0], X_est[:, 2], c="tab:red", **kw)
     ax.scatter(X_gt[:, 0], X_gt[:, 2], c="tab:blue", **kw)
     ax.plot([0], [0], marker="^", ms=9, color="black")
@@ -162,7 +178,7 @@ def plot_point_clouds(X_gt, X_est, out_path, labels=("ground truth", "estimated"
     ax.grid(True, alpha=0.3)
     ax.legend(handles=legend_handles(True))
 
-    ax = fig.add_subplot(1, 3, 3)
+    ax = fig.add_subplot(grid[1, 1])
     ax.scatter(X_est[:, 0], -X_est[:, 1], c="tab:red", **kw)
     ax.scatter(X_gt[:, 0], -X_gt[:, 1], c="tab:blue", **kw)
     ax.set_xlabel("X [dataset units]")

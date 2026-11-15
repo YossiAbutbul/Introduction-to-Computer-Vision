@@ -132,7 +132,8 @@ def plot_e3d_vs_depth(depth, e3d, out_path):
     import matplotlib.pyplot as plt
     from utils.plots import GRID, INK, MUTED, SERIES_COLORS
 
-    fig, ax = plt.subplots(figsize=(5.2, 3.6))
+    plt.rcParams.update({"font.size": 9})
+    fig, ax = plt.subplots(figsize=(6.3, 3.2))      # report width, so the text keeps its size
     ax.scatter(depth, e3d, s=6, color=SERIES_COLORS[0], alpha=0.6, linewidths=0)
     ax.set_xlabel("depth Z in camera 1 [dataset units]", color=INK)
     ax.set_ylabel(r"$e_{3D}$ [dataset units]", color=INK)
