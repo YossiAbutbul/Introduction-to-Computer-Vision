@@ -1,3 +1,5 @@
 node_modules/
 # Word lock files
 ~$*
+# the report has my name and ID - submitted in the ZIP only
+report.docx
