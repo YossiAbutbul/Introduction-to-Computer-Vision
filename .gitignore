@@ -3,3 +3,6 @@ __pycache__/
 
 # assignment file - not for publishing
 *.pdf
+
+# my own photos: large, and the EXIF has GPS
+maman01/bonus/images/
