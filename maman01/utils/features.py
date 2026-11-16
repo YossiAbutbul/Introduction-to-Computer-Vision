@@ -1,7 +1,7 @@
 """
 features.py
 Keypoint detection, description and matching for SIFT, ORB and SuperPoint,
-plus timing. Used in tasks 1 and 2.
+plus timing. Used in all the tasks.
 """
 
 import time

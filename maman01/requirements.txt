@@ -1,0 +1,8 @@
+# versions I ran with (Python 3.13)
+numpy==2.5.4
+opencv-python==5.0.0.93
+matplotlib==3.11.2
+pillow==13.0.0
+torch==2.15.0
+# SuperPoint comes from the LightGlue package
+lightglue @ git+https://github.com/cvg/LightGlue.git@5a650c444718caffc2669dc0094cde908f42dd73

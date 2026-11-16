@@ -82,10 +82,10 @@ def run_one(i, j, method, strategy, gt):
     """All task 1 numbers for one pair, one method and one filter strategy."""
     res, times = time_match_pair(i, j, method, strategy=strategy)
 
-    # (b) quality of the matches w.r.t. F_GT
+    # quality of the matches w.r.t. F_GT
     mask_gt, n_gt, r_gt, d = geometric_consistency(res.pts1, res.pts2, gt["F_gt"])
 
-    # (c) relative pose from the matches, RANSAC on RANSAC_REPEATS shuffled orders
+    # relative pose from the matches, RANSAC on RANSAC_REPEATS shuffled orders
     poses = estimate_pose_repeated(res.pts1, res.pts2, gt["cam1"].K, gt["cam2"].K)
     errs = np.array([pose_errors(p.R, p.t, gt["R_gt"], gt["t_gt"]) for p in poses])
     e_R, e_t = errs[:, 0], errs[:, 1]
@@ -142,7 +142,7 @@ def main():
             for method in METHODS:
                 row, res, mask_gt = run_one(i, j, method, strategy, gt)
                 rows.append(row)
-                # (a) match images, only for the main filter
+                # match images, only for the main filter
                 if strategy == "ratio":
                     draw_matches(i, j, res.pts1, res.pts2,
                                  os.path.join(OUT, "matches_%s_%s.jpg" % (pair_name(i, j), method)),

@@ -146,9 +146,10 @@ def estimate_relative_pose(pts1, pts2, K1, K2=None,
 
     In Fountain-P11 all cameras have the same K, so K goes directly into
     findEssentialMat and the threshold is in pixels.
-    If K1 != K2 (my own photos, bonus), the points are first converted to
+    If K1 != K2 (two different cameras), the points are first converted to
     normalized coordinates with their own K, K = I is used, and the threshold
-    is divided by the average focal length so it stays ~1 px.
+    is divided by the average focal length so it stays ~1 px. In my runs K is
+    always the same for both images, so this case was not needed.
     """
     K2 = K1 if K2 is None else K2
     pts1 = np.asarray(pts1, dtype=np.float64).reshape(-1, 2)

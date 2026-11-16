@@ -50,7 +50,7 @@ def pick_pose(poses):
     return max(poses, key=lambda p: p.n_inliers)
 
 
-def run_pair(i, j, make_plots):
+def run_pair(i, j):
     gt = gt_pair_geometry(i, j)
     K1, K2 = gt["cam1"].K, gt["cam2"].K
     res = match_pair(i, j, METHOD)
@@ -89,10 +89,9 @@ def run_pair(i, j, make_plots):
     rep_es = reprojection_error(Xe, P1_es, P2_es, p1[keep], p2[keep])
 
     name = "%04d-%04d" % (i, j)
-    if make_plots:
-        plot_point_clouds(Xg, Xe, os.path.join(OUT, "cloud_%s.png" % name),
-                          title="%s, SIFT, %d points" % (name, len(Xg)))
-        plot_e3d_vs_depth(depth, e3d, os.path.join(OUT, "e3d_vs_depth_%s.png" % name))
+    plot_point_clouds(Xg, Xe, os.path.join(OUT, "cloud_%s.png" % name),
+                      title="%s, SIFT, %d points" % (name, len(Xg)))
+    plot_e3d_vs_depth(depth, e3d, os.path.join(OUT, "e3d_vs_depth_%s.png" % name))
 
     return {
         "pair": name,
@@ -150,8 +149,8 @@ def plot_e3d_vs_depth(depth, e3d, out_path):
 
 
 def main():
-    rows = [run_pair(*MAIN_PAIR, make_plots=True)]
-    rows += [run_pair(i, j, make_plots=True) for i, j in OTHER_PAIRS]
+    rows = [run_pair(*MAIN_PAIR)]
+    rows += [run_pair(i, j) for i, j in OTHER_PAIRS]
     save_table(rows, os.path.join(OUT, "summary.csv"))
     for r in rows:
         print("--- %s ---" % r["pair"])

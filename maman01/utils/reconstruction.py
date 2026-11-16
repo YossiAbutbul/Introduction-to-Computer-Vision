@@ -1,7 +1,7 @@
 """
 reconstruction.py
 Triangulation, depth / angle checks, reprojection error and filtering of
-3D points. Used in task 3.
+3D points. Used in task 3 and in the bonus.
 """
 
 import cv2
