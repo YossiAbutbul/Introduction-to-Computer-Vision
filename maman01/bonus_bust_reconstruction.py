@@ -21,7 +21,7 @@ Steps:
 
 Outputs (in outputs/bonus_bust/):
   photos.jpg             the photos
-  photos_small/          small copies of the photos without EXIF (no GPS), for the submission
+  photos_small/          small copies of the photos without EXIF (no GPS)
   K.txt                  the calibration matrix and where it came from
   results.csv            one row per pair (also how many 3D points are on the object)
   focal_check.csv        how the result changes when f is changed
@@ -29,6 +29,9 @@ Outputs (in outputs/bonus_bust/):
   scale_check.csv        rough size check using the ~35 cm shooting distance
   matches_<pair>.jpg     matches of the main pair (green = RANSAC inlier)
   cloud_<pair>.png       point cloud of the main pair
+
+The script needs the full-size photos in bonus/images, because K is read from
+their EXIF data. The small copies in photos_small are not enough to run it.
 
 Run:  python bonus_bust_reconstruction.py
 """
@@ -43,7 +46,7 @@ from utils.config import MIN_TRI_ANGLE_DEG
 from utils.dataset import ensure_dir, get_paths
 from utils.features import match_descriptors
 from utils.geometry import estimate_pose_repeated, estimate_relative_pose, rotation_angle_deg, sampson_distance
-from utils.plots import save_table
+from utils.plots import SERIES_COLORS, save_table
 from utils.reconstruction import filter_3d, projection_matrices, reprojection_error, triangulate
 
 ROOT = get_paths()["root"]
@@ -52,7 +55,7 @@ OUT = ensure_dir(os.path.join(get_paths()["outputs"], "bonus_bust"))
 SCALE = 1.0                      # 1.0 = full resolution
 SIFT_CONTRAST = 0.01             # OpenCV default is 0.04
 DIST_CM = 35.0                   # my rough distance from the bust while shooting
-SMALL_WIDTH = 1600               # width of the small copies for the submission
+SMALL_WIDTH = 1600               # width of the small copies
 
 
 def list_images():
@@ -133,7 +136,7 @@ def save_photos_sheet(files):
 
 
 def save_small_copies(files):
-    """Small copies for the submission. cv2.imwrite does not copy the EXIF, so no GPS."""
+    """Small copies of the photos. cv2.imwrite does not copy the EXIF, so no GPS."""
     out = ensure_dir(os.path.join(OUT, "photos_small"))
     for f in files:
         img = cv2.imread(os.path.join(IMG_DIR, f))
@@ -166,20 +169,27 @@ def save_matches_image(f1, f2, p1, p2, mask, out_path, max_draw=200):
     cv2.imwrite(out_path, cv2.resize(canvas, None, fx=0.25, fy=0.25, interpolation=cv2.INTER_AREA))
 
 
-def plot_cloud(X, colors_bgr, out_path, title):
-    """Top view and front view of the cloud, each point in its colour from photo 1."""
+def plot_cloud(X, on_obj, out_path, title):
+    """
+    Top view and front view of the cloud. Points on the bust and points on the
+    background get different colours (the photo colours are all dark, so they
+    don't separate the two).
+    """
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
+    from matplotlib.lines import Line2D
 
     plt.rcParams.update({"font.size": 9})
-    rgb = colors_bgr[:, ::-1] / 255.0
+    groups = [(~on_obj, SERIES_COLORS[1], "background (notebook, table): %d points" % (~on_obj).sum()),
+              (on_obj, SERIES_COLORS[0], "bust: %d points" % on_obj.sum())]
     # a few far points would squeeze the plot, so the axes show the central 96% of the points
     lo, hi = np.percentile(X, 2, axis=0), np.percentile(X, 98, axis=0)
-    fig, axes = plt.subplots(1, 2, figsize=(6.3, 3.4))
-    views = [("top view (X-Z)", 0, 2, 1.0, "X", "Z = depth"), ("front view (X vs -Y)", 0, 1, -1.0, "X", "-Y = up")]
+    fig, axes = plt.subplots(1, 2, figsize=(6.3, 3.7))
+    views = [("Top view (X-Z)", 0, 2, 1.0, "X", "Z = depth"), ("Front view (X vs -Y)", 0, 1, -1.0, "X", "-Y = up")]
     for ax, (name, a, b, sign, xl, yl) in zip(axes, views):
-        ax.scatter(X[:, a], sign * X[:, b], s=6, c=rgb, linewidths=0)
+        for sel, color, _ in groups:
+            ax.scatter(X[sel, a], sign * X[sel, b], s=7, c=color, alpha=0.8, linewidths=0)
         ax.set_xlim(lo[a], hi[a])
         ax.set_ylim(*sorted((sign * lo[b], sign * hi[b])))
         ax.set_aspect("equal", adjustable="box")
@@ -187,8 +197,11 @@ def plot_cloud(X, colors_bgr, out_path, title):
         ax.set_xlabel(xl + "  [baseline = 1]")
         ax.set_ylabel(yl + "  [baseline = 1]")
         ax.grid(True, color="#e1e0d9", linewidth=0.6)
+        ax.set_axisbelow(True)
+    handles = [Line2D([], [], marker="o", ls="", ms=6, color=c, label=l) for _, c, l in groups[::-1]]
     fig.suptitle(title, fontsize=10)
-    fig.tight_layout()
+    fig.legend(handles=handles, loc="lower center", ncol=2, frameon=False)
+    fig.tight_layout(rect=(0, 0.07, 1, 1))
     fig.savefig(out_path, dpi=150, facecolor="white")
     plt.close(fig)
 
@@ -243,10 +256,8 @@ def main():
     f1, f2 = files[best["i"]], files[best["i"] + 1]
     name = "%s-%s" % (short_name(f1), short_name(f2))
     save_matches_image(f1, f2, best["p1"], best["p2"], best["pose"].mask, os.path.join(OUT, "matches_%s.jpg" % name))
-    img1 = load_small(f1, color=True)
-    px = np.clip(np.round(best["q1"]).astype(int), 0, [img1.shape[1] - 1, img1.shape[0] - 1])
-    plot_cloud(best["X"], img1[px[:, 1], px[:, 0]].astype(float), os.path.join(OUT, "cloud_%s.png" % name),
-               "%s, %d points" % (name, len(best["X"])))
+    plot_cloud(best["X"], on_mask(masks[best["i"]], best["q1"]), os.path.join(OUT, "cloud_%s.png" % name),
+               "Reconstructed 3D points from photos %s (camera 1 frame)" % name.replace("-", " and "))
 
     # how sensitive is the result to f? (1.04 = f35 defined by the diagonal instead of the width)
     check = []
