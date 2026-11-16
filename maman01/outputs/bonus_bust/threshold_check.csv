@@ -1,0 +1,5 @@
+pair,ransac_thresh_px,n_matches,n_matches_on_object,n_matches_on_head,n_inliers,n_inliers_on_object,n_inliers_on_head,head_dist_median_px,reproj_median_px
+4344-4347,1.0,959,640,113,464,323,5,4.67,0.262
+4344-4347,2.0,959,640,113,603,474,37,2.97,0.481
+4344-4347,3.0,959,640,113,667,506,56,3.07,0.521
+4344-4347,5.0,959,640,113,732,560,87,2.97,0.602

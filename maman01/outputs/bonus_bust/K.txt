@@ -1,0 +1,7 @@
+image size: 4000 x 3000, used at scale 1.0
+EXIF focal length in 35 mm film: 23 mm
+f_px = f35 / 36 * width * scale = 2555.6
+K =
+[[2555.6    0.  2000. ]
+ [   0.  2555.6 1500. ]
+ [   0.     0.     1. ]]
