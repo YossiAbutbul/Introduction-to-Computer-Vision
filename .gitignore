@@ -6,3 +6,6 @@ __pycache__/
 
 # my own photos: large, and the EXIF has GPS
 maman01/bonus/images/
+
+# Oxford-IIIT Pet (downloaded by the code)
+maman02/data/
