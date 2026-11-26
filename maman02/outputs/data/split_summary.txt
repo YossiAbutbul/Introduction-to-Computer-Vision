@@ -1,0 +1,44 @@
+train 2944  val 736  test 3669
+
+train: cats 950  dogs 1994  dog fraction 0.677
+val: cats 238  dogs 498  dog fraction 0.677
+test: cats 1183  dogs 2486  dog fraction 0.678
+
+breed                        train  val  test  val%
+Abyssinian                      80   20    98  20.0
+american_bulldog                80   20   100  20.0
+american_pit_bull_terrier       80   20   100  20.0
+basset_hound                    80   20   100  20.0
+beagle                          80   20   100  20.0
+Bengal                          80   20   100  20.0
+Birman                          80   20   100  20.0
+Bombay                          77   19    88  19.8
+boxer                           80   20    99  20.0
+British_Shorthair               80   20   100  20.0
+chihuahua                       80   20   100  20.0
+Egyptian_Mau                    74   19    97  20.4
+english_cocker_spaniel          77   19   100  19.8
+english_setter                  80   20   100  20.0
+german_shorthaired              80   20   100  20.0
+great_pyrenees                  80   20   100  20.0
+havanese                        80   20   100  20.0
+japanese_chin                   80   20   100  20.0
+keeshond                        80   20    99  20.0
+leonberger                      80   20   100  20.0
+Maine_Coon                      80   20   100  20.0
+miniature_pinscher              80   20   100  20.0
+newfoundland                    77   19   100  19.8
+Persian                         80   20   100  20.0
+pomeranian                      80   20   100  20.0
+pug                             80   20   100  20.0
+Ragdoll                         80   20   100  20.0
+Russian_Blue                    80   20   100  20.0
+saint_bernard                   80   20   100  20.0
+samoyed                         80   20   100  20.0
+scottish_terrier                80   20    99  20.0
+shiba_inu                       80   20   100  20.0
+Siamese                         79   20   100  20.2
+Sphynx                          80   20   100  20.0
+staffordshire_bull_terrier      80   20    89  20.0
+wheaten_terrier                 80   20   100  20.0
+yorkshire_terrier               80   20   100  20.0

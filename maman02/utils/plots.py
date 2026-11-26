@@ -9,7 +9,7 @@ import numpy as np
 from sklearn import metrics as skm
 
 
-def learning_curves(hist, path, title=""):
+def learning_curves(hist, path, title="", mark_label=None):
     """Loss and accuracy of train and val per epoch, best epoch marked."""
     ep = np.arange(1, len(hist["train_loss"]) + 1)
     fig, axes = plt.subplots(1, 2, figsize=(11, 4))
@@ -17,8 +17,9 @@ def learning_curves(hist, path, title=""):
         ax.plot(ep, hist[f"train_{key}"], label="train")
         ax.plot(ep, hist[f"val_{key}"], label="val")
         if "best_epoch" in hist:
+            text = mark_label or "best val loss"
             ax.axvline(hist["best_epoch"], color="gray", ls="--", lw=1,
-                       label=f"best val loss (epoch {hist['best_epoch']})")
+                       label=f"{text} (epoch {hist['best_epoch']})")
         ax.set_xlabel("epoch")
         ax.set_ylabel(name)
         ax.grid(alpha=0.3)

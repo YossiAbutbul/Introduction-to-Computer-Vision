@@ -9,3 +9,5 @@ maman01/bonus/images/
 
 # Oxford-IIIT Pet (downloaded by the code)
 maman02/data/
+# model weights (big), kept in Google Drive
+maman02/outputs/**/*.pt

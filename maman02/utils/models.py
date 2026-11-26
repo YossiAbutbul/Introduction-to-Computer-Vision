@@ -39,7 +39,7 @@ class PetCNN(nn.Module):
     224x224x3 -> stem -> 56x56x32 -> 4 stages -> 7x7x256 -> avg pool -> linear.
     n_out = 1 gives one logit (dog = positive)."""
 
-    def __init__(self, n_out=1):
+    def __init__(self, n_out=1, dropout=0.3):
         super().__init__()
         self.stem = nn.Sequential(
             conv_bn(3, 32, stride=2),              # 112x112
@@ -52,7 +52,7 @@ class PetCNN(nn.Module):
             ResBlock(128, 256, stride=2), ResBlock(256, 256))  # 7x7x256
         self.head = nn.Sequential(
             nn.AdaptiveAvgPool2d(1), nn.Flatten(),  # 256
-            nn.Dropout(0.3),
+            nn.Dropout(dropout),
             nn.Linear(256, n_out))
         self.n_out = n_out
 

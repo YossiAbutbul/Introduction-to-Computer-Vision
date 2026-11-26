@@ -1,0 +1,7 @@
+node_modules/
+# Word lock files
+~$*
+# the report has my name and ID - submitted in the ZIP only
+report.docx
+# the submission ZIP has the report with my name and ID
+*.zip
